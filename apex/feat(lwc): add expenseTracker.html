@@ -1,0 +1,33 @@
+import { LightningElement, track, wire } from 'lwc';
+import getExpenses from '@salesforce/apex/ExpenseController.getExpenses';
+import addExpense from '@salesforce/apex/ExpenseController.addExpense';
+
+export default class ExpenseTracker extends LightningElement {
+  @track name = '';
+  @track amount = '';
+  @track category = '';
+  @track expenses = [];
+
+  @wire(getExpenses)
+  wiredExpenses({ data, error }) {
+    if (data) this.expenses = data;
+    else if (error) console.error(error);
+  }
+
+  handleChange(event) {
+    const field = event.target.label.toLowerCase();
+    this[field] = event.target.value;
+  }
+
+  addExpense() {
+    addExpense({ name: this.name, amount: parseFloat(this.amount), category: this.category })
+      .then(() => {
+        this.name = '';
+        this.amount = '';
+        this.category = '';
+        return getExpenses();
+      })
+      .then((data) => (this.expenses = data))
+      .catch((error) => console.error(error));
+  }
+}
